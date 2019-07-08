@@ -30,6 +30,10 @@ public class Binario {
     return Integer.toString(this.decimal);
   }
 
+  public String endereco() {
+    return numero.substring(0, 4) + "." + numero.substring(4, 5) + "." + numero.substring(5, 7);
+  }
+
   public String toBin() {
     return this.toBin(tamanho);
   }

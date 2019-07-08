@@ -46,15 +46,18 @@ public class Flow {
     String candidatoBinario = input.nextLine();
     Binario endereco = obtemBinario(candidatoBinario);
 
-    if (endereco != null)
-      cache.acessaEndereco(endereco);
+    if (endereco != null){
+      int valorLido = cache.acessaEndereco(endereco);
+      System.out.println("\nO valor lido no endereço "  + endereco.endereco() + " é: " + valorLido);
+      freeze();
+    }
   }
 
   private void escreverEndereco() {
     Scanner input = new Scanner(System.in);
     int valor = 0;
 
-    System.out.print("\nInforme o endereço a ser lido: ");
+    System.out.print("\nInforme o endereço a ser escrito: ");
     String candidatoBinario = input.nextLine();
     Binario endereco = obtemBinario(candidatoBinario);
 
@@ -63,6 +66,12 @@ public class Flow {
       valor = input.nextInt();
       cache.escreveEndereco(endereco, valor);
     }
+  }
+
+  public void freeze(){
+    System.out.println("Pressione enter para continuar");
+    Scanner freeze = new Scanner(System.in);
+    freeze.nextLine();
   }
 
   public void run() {
@@ -82,9 +91,7 @@ public class Flow {
         break;
       case 3:
         cache.estatistica();
-        System.out.println("Pressione enter para sair");
-        Scanner freeze = new Scanner(System.in);
-        freeze.nextLine();
+        freeze();
         break;
       case 4:
         System.out.println("Meu trabalho por aqui foi feito");

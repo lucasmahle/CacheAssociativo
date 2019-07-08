@@ -39,13 +39,26 @@ public class Cache {
     conjuntoAlvo.linha[0] = linhaDeslocada;
   }
 
-  private RetornoSubstituicao obterIndiceSubstituicao(int indiceConjunto) {
+  private void liberaTopo(int indiceConjunto) {
     Conjunto conjuntoAlvo = conjunto[indiceConjunto];
-    RetornoSubstituicao retorno = new RetornoSubstituicao();
 
-    retorno.index = conjuntoAlvo.indiceMaximo;
-    if (conjuntoAlvo.espacoLivre < conjuntoAlvo.indiceMaximo) {
-      retorno.index = conjuntoAlvo.espacoLivre;
+    for (int i = 0; i < 4; i++) {
+      if (conjuntoAlvo.linha[i].bitValid == 1)
+        conjuntoAlvo.linha[i].LRU++;
+    }
+  }
+
+  private ControleLRU obterIndiceSubstituicao(int indiceConjunto) {
+    Conjunto conjuntoAlvo = conjunto[indiceConjunto];
+    ControleLRU retorno = new ControleLRU();
+
+    // O próximo índice a ser escrito
+    // Sempre é o último
+    retorno.indexTopo = conjuntoAlvo.indiceMaximo;
+
+    // Exceto quando há espaços livres
+    if (conjuntoAlvo.espacoLivre <= conjuntoAlvo.indiceMaximo) {
+      retorno.indexTopo = conjuntoAlvo.espacoLivre;
       retorno.substituir = false;
       conjuntoAlvo.espacoLivre++;
     }
@@ -58,7 +71,7 @@ public class Cache {
     int indiceConjunto = endereco.getConjunto();
     int indiceDeslocamento = endereco.getDeslocamento();
 
-    RetornoSubstituicao substituicao = null;
+    ControleLRU substituicao = null;
     Conjunto conjuntoAlvo = conjunto[indiceConjunto];
     boolean dadoCacheado = false;
 
@@ -78,7 +91,7 @@ public class Cache {
     if (!dadoCacheado) {
       substituicao = obterIndiceSubstituicao(indiceConjunto);
 
-      Linha linhaAlvo = conjuntoAlvo.linha[substituicao.index];
+      Linha linhaAlvo = conjuntoAlvo.linha[substituicao.indexTopo];
 
       // Carrega dado da MP
       for (int i = 0; i < 4; i++) {
@@ -91,14 +104,16 @@ public class Cache {
     }
 
     if (substituicao.substituir)
-      deslocaIndiceParaTopo(substituicao.index, indiceConjunto);
+      deslocaIndiceParaTopo(substituicao.indexTopo, indiceConjunto);
   }
 
-  public void acessaEndereco(Binario endereco) {
+  public int acessaEndereco(Binario endereco) {
     int tag = endereco.getTag();
     int indiceConjunto = endereco.getConjunto();
+    int indiceDeslocamento = endereco.getDeslocamento();
+    int valorLido = 0;
 
-    RetornoSubstituicao substituicao = new RetornoSubstituicao();
+    ControleLRU substituicao = new ControleLRU();
     Conjunto conjuntoAlvo = conjunto[indiceConjunto];
     boolean dadoCacheado = false;
 
@@ -106,19 +121,20 @@ public class Cache {
     for (int i = 0; i < 4; i++) {
       Linha linhaTemp = conjuntoAlvo.linha[i];
       if (linhaTemp.tag == tag && linhaTemp.bitValid == 1) {
-        hits++;
+        this.hits++;
         dadoCacheado = true;
-        substituicao.index = i;
-        substituicao.substituir = conjuntoAlvo.espacoLivre >= conjuntoAlvo.indiceMaximo;
+        valorLido = linhaTemp.deslocamento[indiceDeslocamento];
+        substituicao.indexTopo = i;
         break;
       }
     }
 
     if (!dadoCacheado) {
-      misses++;
+      this.misses++;
 
-      substituicao = obterIndiceSubstituicao(indiceConjunto);
-      Linha linhaAlvo = conjuntoAlvo.linha[substituicao.index];
+      // substituicao = obterIndiceSubstituicao(indiceConjunto);
+      liberaTopo(indiceConjunto);
+      Linha linhaAlvo = conjuntoAlvo.linha[0];
 
       // Carrega dado da MP
       for (int i = 0; i < 4; i++) {
@@ -126,12 +142,16 @@ public class Cache {
         linhaAlvo.deslocamento[i] = data;
       }
 
+      valorLido = linhaAlvo.deslocamento[indiceDeslocamento];
+      linhaAlvo.LRU = 1;
       linhaAlvo.tag = tag;
       linhaAlvo.bitValid = 1;
     }
 
     if (substituicao.substituir)
-      deslocaIndiceParaTopo(substituicao.index, indiceConjunto);
+      deslocaIndiceParaTopo(substituicao.indexTopo, indiceConjunto);
+
+    return valorLido;
   }
 
   public void estatistica() {
@@ -148,14 +168,15 @@ public class Cache {
 
     for (int indexConjunto = 0; indexConjunto < 2; indexConjunto++) {
       System.out.println("\nConjunto: " + indexConjunto);
-      System.out.println("| V |  Tag |Dest|  D1(00) |  D2(01) |  D3(10) |  D4(11) |");
+      System.out.println("| LRU | V |  Tag | Dest |  D1(00) |  D2(01) |  D3(10) |  D4(11) |");
 
       Conjunto conjuntoTemp = conjunto[indexConjunto];
 
       for (int indexLinha = 0; indexLinha < 4; indexLinha++) {
         Linha linhaTemp = conjuntoTemp.linha[indexLinha];
         Binario tagBin = new Binario(linhaTemp.tag);
-        System.out.print("| " + linhaTemp.bitValid + " | " + tagBin.toBin(4) + " | " + indexConjunto + "  | ");
+        System.out.print("|  " + (linhaTemp.bitValid == 1 ? linhaTemp.LRU : 0) + "  | " + linhaTemp.bitValid + " | "
+            + tagBin.toBin(4) + " |   " + indexConjunto + "  | ");
 
         for (int indexDeslocamento = 0; indexDeslocamento < 4; indexDeslocamento++) {
           Binario deslocamentoBin = new Binario(linhaTemp.deslocamento[indexDeslocamento]);
