@@ -65,6 +65,8 @@ public class Flow {
       System.out.print("\nInforme o valor a ser armazenado: ");
       valor = input.nextInt();
       cache.escreveEndereco(endereco, valor);
+      System.out.println("\nO endereço "  + endereco.endereco() + " foi escrito com sucesso.");
+      freeze();
     }
   }
 

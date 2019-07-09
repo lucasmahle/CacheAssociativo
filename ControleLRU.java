@@ -1,5 +1,5 @@
 public class ControleLRU {
-  boolean substituir = true;
-  boolean realocar = false;
+  boolean substituir = false;
+  boolean deslocarTopo = false;
   int indexTopo = 0;
 }
