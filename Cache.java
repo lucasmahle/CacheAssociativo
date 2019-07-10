@@ -23,7 +23,7 @@ public class Cache extends DumpCache {
 
   private int randomValue() {
     int min = 0;
-    int max = 127;
+    int max = 255;
     Random r = new Random();
     return r.nextInt((max - min) + 1) + min;
   }
@@ -37,7 +37,7 @@ public class Cache extends DumpCache {
       Linha linhaTemp = conjuntoAlvo.linha[i];
 
       if (substituicao.indexTopo == i)
-        conjuntoAlvo.linha[i].LRU = 1;
+        conjuntoAlvo.linha[i].LRU = 0;
       else if (linhaTemp.bitValid == 1 && (linhaTemp.LRU <= lruLinhaDeslocada || lruLinhaDeslocada == 0))
         conjuntoAlvo.linha[i].LRU++;
     }
@@ -52,30 +52,12 @@ public class Cache extends DumpCache {
         return i;
       }
 
-      if (conjuntoAlvo.linha[i].LRU == 4)
+      if (conjuntoAlvo.linha[i].LRU == 3)
         indiceLRUSubstituicao = i;
     }
 
     return indiceLRUSubstituicao;
   }
-
-  // private ControleLRU APAGARobterIndiceSubstituicao(int indiceConjunto) {
-  // Conjunto conjuntoAlvo = conjunto[indiceConjunto];
-  // ControleLRU retorno = new ControleLRU();
-
-  // // O próximo índice a ser escrito
-  // // Sempre é o último
-  // retorno.indexTopo = conjuntoAlvo.indiceMaximo;
-
-  // // Exceto quando há espaços livres
-  // if (conjuntoAlvo.espacoLivre <= conjuntoAlvo.indiceMaximo) {
-  // retorno.indexTopo = conjuntoAlvo.espacoLivre;
-  // retorno.substituir = false;
-  // conjuntoAlvo.espacoLivre++;
-  // }
-
-  // return retorno;
-  // }
 
   public void escreveEndereco(Binario endereco, int valor) {
     int tag = endereco.getTag();
@@ -101,14 +83,11 @@ public class Cache extends DumpCache {
     }
 
     if (!dadoCacheado) {
+      this.misses++;
       int indiceSubstituicao = indiceSubstituicao(indiceConjunto);
       Linha linhaAlvo = conjuntoAlvo.linha[indiceSubstituicao];
-
-      // Carrega dado da MP
-      for (int i = 0; i < 4; i++) {
-        int data = bloco[tag].dado[i];
-        linhaAlvo.deslocamento[i] = data;
-      }
+      
+      this.carregaDadosDaMP(indiceConjunto, indiceSubstituicao, tag);
 
       substituicao.indexTopo = indiceSubstituicao;
       linhaAlvo.tag = tag;
@@ -146,11 +125,7 @@ public class Cache extends DumpCache {
       int indiceSubstituicao = indiceSubstituicao(indiceConjunto);
       Linha linhaAlvo = conjuntoAlvo.linha[indiceSubstituicao];
 
-      // Carrega dado da MP
-      for (int i = 0; i < 4; i++) {
-        int data = bloco[tag].dado[i];
-        linhaAlvo.deslocamento[i] = data;
-      }
+      this.carregaDadosDaMP(indiceConjunto, indiceSubstituicao, tag);
 
       valorLido = linhaAlvo.deslocamento[indiceDeslocamento];
       substituicao.indexTopo = indiceSubstituicao;
@@ -163,7 +138,24 @@ public class Cache extends DumpCache {
     return valorLido;
   }
 
+  private void carregaDadosDaMP(int indiceConjunto, int indiceQuadro, int tag){
+    Conjunto conjuntoAlvo = conjunto[indiceConjunto];
+    Linha linhaAlvo = conjuntoAlvo.linha[indiceQuadro];
+    String tagStr = Integer.toString(tag, 2);
+
+    // Adiciona o bit do conjunto
+    tagStr += indiceConjunto;
+
+    // Converte para valor de acesso
+    int blocoMP = Integer.parseInt(tagStr, 2);
+
+    for (int i = 0; i < 4; i++) {
+      int data = bloco[blocoMP].dado[i];
+      linhaAlvo.deslocamento[i] = data;
+    }
+  }
+
   public void estatistica() {
-    this.dumpCache(bloco, conjunto, hits, misses, 0);
+    this.dumpCache(bloco, conjunto, hits, misses);
   }
 }

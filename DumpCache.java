@@ -3,42 +3,49 @@ public class DumpCache {
   private Conjunto[] conjunto = null;
   private int hits = 0;
   private int misses = 0;
-  private int acessos = 0;
 
-  protected void dumpCache(Bloco[] _bloco, Conjunto[] _conjunto, int _hits, int _misses, int _acessos) {
+  protected void dumpCache(Bloco[] _bloco, Conjunto[] _conjunto, int _hits, int _misses) {
     this.bloco = _bloco;
     this.conjunto = _conjunto;
     this.hits = _hits;
     this.misses = _misses;
-    this.acessos = _acessos;
 
     this.printMemoriaPrincipal();
 
     this.printDataCache();
 
-    System.out.println("Hits: " + hits);
-    System.out.println("Misses: " + misses);
+    this.totalizadores();
   }
 
   private String ft(int valor, int quantidade) {
     return String.format("%0" + quantidade + "d", valor);
   }
 
+  private void totalizadores() {
+    int total = hits + misses;
+    double hitsPerc = hits == 0 ? 0 : (hits * 100) / total;
+    double missesPerc = misses == 0 ? 0 : (misses * 100) / total;
+    System.out.println("Hits:   " + hits + " -> " + String.format("%.2f", hitsPerc) + "%");
+    System.out.println("Misses: " + misses + " -> " + String.format("%.2f", missesPerc) + "%");
+    System.out.println("Total:  " + total);
+  }
+
   private void printDataCache(){
     for (int indexConjunto = 0; indexConjunto < 2; indexConjunto++) {
       System.out.println("\nConjunto: " + indexConjunto);
-      System.out.println("| LRU | V |  Tag | Dest |  D1(00) |  D2(01) |  D3(10) |  D4(11) |");
+      System.out.println("| LRU | V |  Tag | Dest |   D0(00) |   D1(01) |   D2(10) |   D3(11) |");
 
       Conjunto conjuntoTemp = conjunto[indexConjunto];
 
       for (int indexLinha = 0; indexLinha < 4; indexLinha++) {
         Linha linhaTemp = conjuntoTemp.linha[indexLinha];
         Binario tagBin = new Binario(linhaTemp.tag);
-        System.out.print("|  " + (linhaTemp.bitValid == 1 ? linhaTemp.LRU : 0) + "  | " + linhaTemp.bitValid + " | "
+        Binario lruBin = new Binario(linhaTemp.LRU);
+        System.out.print("|  " + (linhaTemp.bitValid == 1 ? lruBin.toBin(2) : "00") + " | " + linhaTemp.bitValid + " | "
             + tagBin.toBin(4) + " |   " + indexConjunto + "  | ");
 
         for (int indexDeslocamento = 0; indexDeslocamento < 4; indexDeslocamento++) {
-          Binario deslocamentoBin = new Binario(linhaTemp.deslocamento[indexDeslocamento]);
+          Binario deslocamentoBin = new Binario(linhaTemp.deslocamento[indexDeslocamento], 8);
           System.out.print(deslocamentoBin.toBin());
           System.out.print(" | ");
         }
@@ -51,7 +58,7 @@ public class DumpCache {
   private void printMemoriaPrincipal() {
     System.out.println("\nMemória Principal");
 
-    System.out.println("| Bloco |  Célula 1 |  Célula 2 |  Célula 3 |  Célula 4 |");
+    System.out.println("| Bloco |  Célula 0 |  Célula 1 |  Célula 2 |  Célula 3 |");
     for (int indexBloco = 0; indexBloco < 32; indexBloco++) {
       System.out.print("|   " + ft(indexBloco, 2) + "  ");
 

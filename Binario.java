@@ -1,9 +1,17 @@
 public class Binario {
   private String numero = "";
   private int decimal = 0;
-  private int tamanho = 7;
+  private int tamanho = 0;
 
   public Binario(String input) throws Exception {
+    this.tamanho = 7;
+    this.validaEntrada(input);
+    this.numero = input;
+    this.decimal = Integer.parseInt(input, 2);
+  }
+
+  public Binario(String input, int _tamanho) throws Exception {
+    this.tamanho = _tamanho;
     this.validaEntrada(input);
     this.numero = input;
     this.decimal = Integer.parseInt(input, 2);
@@ -11,7 +19,13 @@ public class Binario {
 
   public Binario(int input) {
     this.numero = Integer.toString(input, 2);
+    this.tamanho = 7;
+  }
+
+  public Binario(int input, int _tamanho) {
+    this.numero = Integer.toString(input, 2);
     this.decimal = input;
+    this.tamanho = _tamanho;
   }
 
   public int getTag() {
