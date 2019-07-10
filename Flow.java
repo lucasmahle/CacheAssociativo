@@ -47,8 +47,15 @@ public class Flow {
     Binario endereco = obtemBinario(candidatoBinario);
 
     if (endereco != null){
-      int valorLido = cache.acessaEndereco(endereco);
-      System.out.println("\nO valor lido no endereço "  + endereco.endereco() + " é: " + valorLido);
+      RetornoAcesso retorno = cache.acessaEndereco(endereco);
+      
+      if(retorno.hit) 
+        System.out.println("\nACERTO!\nDado já estava armazenado na cache");
+      else
+        System.out.println("\nFALHA!\nDado não estava armazenado na cache");
+
+      System.out.println("O valor lido no endereço "  + endereco.endereco() + " é: " + retorno.valor);
+      
       freeze();
     }
   }
@@ -64,6 +71,13 @@ public class Flow {
     if (endereco != null) {
       System.out.print("\nInforme o valor a ser armazenado: ");
       valor = input.nextInt();
+      
+      if(valor > 255){
+        System.out.println("\nO valor de escrita não pode ser maior que 255.");
+        freeze();
+        return;
+      }
+
       cache.escreveEndereco(endereco, valor);
       System.out.println("\nO endereço "  + endereco.endereco() + " foi escrito com sucesso.");
       freeze();

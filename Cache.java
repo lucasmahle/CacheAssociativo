@@ -5,8 +5,10 @@ public class Cache extends DumpCache {
   private Conjunto[] conjunto = new Conjunto[2];
   private Bloco[] bloco = new Bloco[32];
 
-  private int hits = 0;
-  private int misses = 0;
+  private int hitsLeitura = 0;
+  private int missesLeitura = 0;
+  private int hitsEscrita = 0;
+  private int missesEscrita = 0;
 
   public Cache() {
     for (int i = 0; i < 2; i++) {
@@ -76,6 +78,7 @@ public class Cache extends DumpCache {
       Linha linhaTemp = conjuntoAlvo.linha[i];
       if (linhaTemp.tag == tag && linhaTemp.bitValid == 1) {
         dadoCacheado = true;
+        this.hitsEscrita++;
         substituicao.indexTopo = i;
         linhaTemp.deslocamento[indiceDeslocamento] = valor;
         break;
@@ -83,7 +86,7 @@ public class Cache extends DumpCache {
     }
 
     if (!dadoCacheado) {
-      this.misses++;
+      this.missesEscrita++;
       int indiceSubstituicao = indiceSubstituicao(indiceConjunto);
       Linha linhaAlvo = conjuntoAlvo.linha[indiceSubstituicao];
       
@@ -97,12 +100,12 @@ public class Cache extends DumpCache {
     deslocamentoInternoTopo(substituicao, indiceConjunto);
   }
 
-  public int acessaEndereco(Binario endereco) {
+  public RetornoAcesso acessaEndereco(Binario endereco) {
     int tag = endereco.getTag();
     int indiceConjunto = endereco.getConjunto();
     int indiceDeslocamento = endereco.getDeslocamento();
-    int valorLido = 0;
 
+    RetornoAcesso retorno = new RetornoAcesso();
     ControleLRU substituicao = new ControleLRU();
     Conjunto conjuntoAlvo = conjunto[indiceConjunto];
     boolean dadoCacheado = false;
@@ -111,23 +114,25 @@ public class Cache extends DumpCache {
     for (int i = 0; i < 4; i++) {
       Linha linhaTemp = conjuntoAlvo.linha[i];
       if (linhaTemp.tag == tag && linhaTemp.bitValid == 1) {
-        this.hits++;
+        this.hitsLeitura++;
         dadoCacheado = true;
-        valorLido = linhaTemp.deslocamento[indiceDeslocamento];
+        retorno.valor = linhaTemp.deslocamento[indiceDeslocamento];
+        retorno.hit = true;
         substituicao.indexTopo = i;
         break;
       }
     }
 
     if (!dadoCacheado) {
-      this.misses++;
+      this.missesLeitura++;
 
       int indiceSubstituicao = indiceSubstituicao(indiceConjunto);
       Linha linhaAlvo = conjuntoAlvo.linha[indiceSubstituicao];
 
       this.carregaDadosDaMP(indiceConjunto, indiceSubstituicao, tag);
 
-      valorLido = linhaAlvo.deslocamento[indiceDeslocamento];
+      retorno.valor = linhaAlvo.deslocamento[indiceDeslocamento];
+      retorno.hit = false;
       substituicao.indexTopo = indiceSubstituicao;
       linhaAlvo.tag = tag;
       linhaAlvo.bitValid = 1;
@@ -135,7 +140,7 @@ public class Cache extends DumpCache {
 
     deslocamentoInternoTopo(substituicao, indiceConjunto);
 
-    return valorLido;
+    return retorno;
   }
 
   private void carregaDadosDaMP(int indiceConjunto, int indiceQuadro, int tag){
@@ -156,6 +161,6 @@ public class Cache extends DumpCache {
   }
 
   public void estatistica() {
-    this.dumpCache(bloco, conjunto, hits, misses);
+    this.dumpCache(bloco, conjunto, hitsLeitura, missesLeitura, hitsEscrita, missesEscrita);
   }
 }
