@@ -61,11 +61,12 @@ public class Cache extends DumpCache {
     return indiceLRUSubstituicao;
   }
 
-  public void escreveEndereco(Binario endereco, int valor) {
+  public RetornoAcesso escreveEndereco(Binario endereco, int valor) {
     int tag = endereco.getTag();
     int indiceConjunto = endereco.getConjunto();
     int indiceDeslocamento = endereco.getDeslocamento();
 
+    RetornoAcesso retorno = new RetornoAcesso();
     ControleLRU substituicao = new ControleLRU();
     Conjunto conjuntoAlvo = conjunto[indiceConjunto];
     boolean dadoCacheado = false;
@@ -79,6 +80,7 @@ public class Cache extends DumpCache {
       if (linhaTemp.tag == tag && linhaTemp.bitValid == 1) {
         dadoCacheado = true;
         this.hitsEscrita++;
+        retorno.hit = true;
         substituicao.indexTopo = i;
         linhaTemp.deslocamento[indiceDeslocamento] = valor;
         break;
@@ -92,12 +94,15 @@ public class Cache extends DumpCache {
       
       this.carregaDadosDaMP(indiceConjunto, indiceSubstituicao, tag);
 
+      retorno.hit = false;
       substituicao.indexTopo = indiceSubstituicao;
       linhaAlvo.tag = tag;
       linhaAlvo.bitValid = 1;
     }
 
     deslocamentoInternoTopo(substituicao, indiceConjunto);
+
+    return retorno;
   }
 
   public RetornoAcesso acessaEndereco(Binario endereco) {

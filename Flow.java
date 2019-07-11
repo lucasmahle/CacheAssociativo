@@ -78,7 +78,13 @@ public class Flow {
         return;
       }
 
-      cache.escreveEndereco(endereco, valor);
+      RetornoAcesso retorno = cache.escreveEndereco(endereco, valor);
+
+      if(retorno.hit) 
+        System.out.println("\nACERTO!\nDado escrito já estava armazenado na cache");
+      else
+        System.out.println("\nFALHA!\nDado escrito não estava armazenado na cache");
+
       System.out.println("\nO endereço "  + endereco.endereco() + " foi escrito com sucesso.");
       freeze();
     }
